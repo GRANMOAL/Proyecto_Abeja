@@ -1,5 +1,6 @@
 # Dependencias básicas del proyecto
 Flask
+gunicorn
 Pillow
 numpy
 opencv-python
