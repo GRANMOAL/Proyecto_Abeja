@@ -1,0 +1,22 @@
+# Dependencias básicas del proyecto
+Flask==3.0.0
+Pillow==10.1.0
+numpy==1.24.3
+opencv-python==4.8.1.78
+
+# Dependencias opcionales para clasificación con Transformador
+# Descomentar las siguientes líneas si deseas usar el clasificador real
+# transformers==4.35.0
+# torch==2.1.0
+# torchvision==0.16.0
+
+# Dependencias adicionales para desarrollo
+# Werkzeug==3.0.1
+# MarkupSafe==2.1.3
+
+# Para instalación rápida ejecutar:
+# pip install -r requirements.txt
+
+# Para instalar con soporte de transformador:
+# pip install -r requirements.txt
+# pip install transformers torch torchvision
