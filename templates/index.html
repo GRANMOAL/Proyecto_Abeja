@@ -1,741 +1,860 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🐝 Bee Pathfinding - Búsqueda de Caminos con Abejas</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1d3d 50%, #0f1229 100%);
-            color: #ffd700;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0e27 0%,
+          #1a1d3d 50%,
+          #0f1229 100%
+        );
+        color: #ffd700;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
 
-        /* Estrellas de fondo */
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
+      /* Estrellas de fondo */
+      .stars {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
 
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
+      .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle 3s infinite;
+      }
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0.3;
         }
+        50% {
+          opacity: 1;
+        }
+      }
 
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            text-shadow: 0 0 20px #ffd700, 0 0 30px #ff8c00;
-        }
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+        text-shadow: 0 0 20px #ffd700, 0 0 30px #ff8c00;
+      }
 
-        h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            animation: glow 2s ease-in-out infinite;
-        }
+      h1 {
+        font-size: 3em;
+        margin-bottom: 10px;
+        animation: glow 2s ease-in-out infinite;
+      }
 
-        @keyframes glow {
-            0%, 100% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ff8c00; }
-            50% { text-shadow: 0 0 30px #ffd700, 0 0 50px #ff8c00, 0 0 60px #ff6347; }
+      @keyframes glow {
+        0%,
+        100% {
+          text-shadow: 0 0 20px #ffd700, 0 0 30px #ff8c00;
         }
+        50% {
+          text-shadow: 0 0 30px #ffd700, 0 0 50px #ff8c00, 0 0 60px #ff6347;
+        }
+      }
 
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
 
-        .control-panel {
-            background: rgba(20, 24, 54, 0.9);
-            border: 2px solid #ffd700;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-        }
+      .control-panel {
+        background: rgba(20, 24, 54, 0.9);
+        border: 2px solid #ffd700;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      }
 
-        .control-panel h3 {
-            margin-bottom: 15px;
-            color: #ff8c00;
-            border-bottom: 2px solid #ffd700;
-            padding-bottom: 10px;
-        }
+      .control-panel h3 {
+        margin-bottom: 15px;
+        color: #ff8c00;
+        border-bottom: 2px solid #ffd700;
+        padding-bottom: 10px;
+      }
 
-        button {
-            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-            color: #0a0e27;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1em;
-            margin: 5px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-        }
+      button {
+        background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+        color: #0a0e27;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1em;
+        margin: 5px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+      }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
-        }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+      }
 
-        button:active {
-            transform: translateY(0);
-        }
+      button:active {
+        transform: translateY(0);
+      }
 
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+      .mode-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
 
-        .mode-btn {
-            flex: 1;
-            background: rgba(255, 215, 0, 0.2);
-            color: #ffd700;
-            border: 2px solid #ffd700;
-        }
+      .mode-btn {
+        flex: 1;
+        background: rgba(255, 215, 0, 0.2);
+        color: #ffd700;
+        border: 2px solid #ffd700;
+      }
 
-        .mode-btn.active {
-            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-            color: #0a0e27;
-        }
+      .mode-btn.active {
+        background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+        color: #0a0e27;
+      }
 
-        #gridContainer {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 30px 0;
-            perspective: 1000px;
-        }
+      #gridContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 30px 0;
+        perspective: 1000px;
+      }
 
-        #honeycombGrid {
-            display: grid;
-            gap: 5px;
-            padding: 20px;
-            background: rgba(20, 24, 54, 0.8);
-            border-radius: 20px;
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
-            transform: rotateX(5deg);
-        }
+      #honeycombGrid {
+        display: grid;
+        gap: 5px;
+        padding: 20px;
+        background: rgba(20, 24, 54, 0.8);
+        border-radius: 20px;
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+        transform: rotateX(5deg);
+      }
 
-        .hex-cell {
-            position: relative;
-            width: 50px;
-            height: 58px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+      .hex-cell {
+        position: relative;
+        width: 50px;
+        height: 58px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
 
-        .hexagon {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-            transition: all 0.3s;
-        }
+      .hexagon {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        clip-path: polygon(
+          30% 0%,
+          70% 0%,
+          100% 50%,
+          70% 100%,
+          30% 100%,
+          0% 50%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        transition: all 0.3s;
+      }
 
-        .hex-empty { background: rgba(255, 255, 255, 0.05); }
-        .hex-obstacle { background: #2d2d2d; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-        .hex-flower { 
-            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
-            animation: flower-pulse 2s infinite;
-        }
-        .hex-start { 
-            background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);
-            box-shadow: 0 0 20px #00ff00;
-        }
-        .hex-goal { 
-            background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-            animation: hive-glow 1.5s infinite;
-        }
-        .hex-path { 
-            background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%);
-            animation: path-glow 1s;
-        }
+      .hex-empty {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .hex-obstacle {
+        background: #2d2d2d;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+      .hex-flower {
+        background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+        animation: flower-pulse 2s infinite;
+      }
+      .hex-start {
+        background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);
+        box-shadow: 0 0 20px #00ff00;
+      }
+      .hex-goal {
+        background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+        animation: hive-glow 1.5s infinite;
+      }
+      .hex-path {
+        background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%);
+        animation: path-glow 1s;
+      }
 
-        @keyframes flower-pulse {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.3); }
+      @keyframes flower-pulse {
+        0%,
+        100% {
+          filter: brightness(1);
         }
+        50% {
+          filter: brightness(1.3);
+        }
+      }
 
-        @keyframes hive-glow {
-            0%, 100% { box-shadow: 0 0 20px #ffd700; }
-            50% { box-shadow: 0 0 40px #ffd700, 0 0 60px #ff8c00; }
+      @keyframes hive-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px #ffd700;
         }
+        50% {
+          box-shadow: 0 0 40px #ffd700, 0 0 60px #ff8c00;
+        }
+      }
 
-        @keyframes path-glow {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+      @keyframes path-glow {
+        from {
+          transform: scale(0.8);
+          opacity: 0;
         }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
 
-        .hex-cell:hover .hexagon {
-            transform: scale(1.1);
-            filter: brightness(1.3);
-        }
+      .hex-cell:hover .hexagon {
+        transform: scale(1.1);
+        filter: brightness(1.3);
+      }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
 
-        .stat-card {
-            background: rgba(20, 24, 54, 0.9);
-            border: 2px solid #ffd700;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-        }
+      .stat-card {
+        background: rgba(20, 24, 54, 0.9);
+        border: 2px solid #ffd700;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+      }
 
-        .stat-value {
-            font-size: 2.5em;
-            color: #ff8c00;
-            font-weight: bold;
-            text-shadow: 0 0 10px #ff8c00;
-        }
+      .stat-value {
+        font-size: 2.5em;
+        color: #ff8c00;
+        font-weight: bold;
+        text-shadow: 0 0 10px #ff8c00;
+      }
 
-        .stat-label {
-            color: #ffd700;
-            margin-top: 10px;
-        }
+      .stat-label {
+        color: #ffd700;
+        margin-top: 10px;
+      }
 
-        .comparison-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
+      .comparison-table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+      }
 
-        .comparison-table th,
-        .comparison-table td {
-            padding: 12px;
-            border: 1px solid #ffd700;
-            text-align: center;
-        }
+      .comparison-table th,
+      .comparison-table td {
+        padding: 12px;
+        border: 1px solid #ffd700;
+        text-align: center;
+      }
 
-        .comparison-table th {
-            background: rgba(255, 215, 0, 0.2);
-            color: #ffd700;
-        }
+      .comparison-table th {
+        background: rgba(255, 215, 0, 0.2);
+        color: #ffd700;
+      }
 
-        .image-upload {
-            margin-top: 15px;
-        }
+      .image-upload {
+        margin-top: 15px;
+      }
 
-        #imagePreview {
-            max-width: 100%;
-            border-radius: 10px;
-            margin-top: 10px;
-            border: 2px solid #ffd700;
-        }
+      #imagePreview {
+        max-width: 100%;
+        border-radius: 10px;
+        margin-top: 10px;
+        border: 2px solid #ffd700;
+      }
 
-        .classification-result {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 10px;
-            border: 2px solid #ffd700;
-        }
+      .classification-result {
+        margin-top: 15px;
+        padding: 15px;
+        background: rgba(255, 215, 0, 0.1);
+        border-radius: 10px;
+        border: 2px solid #ffd700;
+      }
 
-        #bee {
-            position: absolute;
-            font-size: 2em;
-            transition: all 0.5s;
-            z-index: 100;
-            filter: drop-shadow(0 0 10px #ffd700);
-        }
+      #bee {
+        position: absolute;
+        font-size: 2em;
+        transition: all 0.5s;
+        z-index: 100;
+        filter: drop-shadow(0 0 10px #ffd700);
+      }
 
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
+      .legend {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(20, 24, 54, 0.8);
-            padding: 10px 15px;
-            border-radius: 10px;
-            border: 1px solid #ffd700;
-        }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(20, 24, 54, 0.8);
+        padding: 10px 15px;
+        border-radius: 10px;
+        border: 1px solid #ffd700;
+      }
 
-        .legend-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 5px;
-            clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
-        }
+      .legend-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        clip-path: polygon(
+          30% 0%,
+          70% 0%,
+          100% 50%,
+          70% 100%,
+          30% 100%,
+          0% 50%
+        );
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="stars" id="starsContainer"></div>
-    
+
     <div class="container">
-        <header>
-            <h1>🐝 Bee Pathfinding System</h1>
-            <p>Sistema de Búsqueda de Caminos con Algoritmos DFS y BFS</p>
-        </header>
+      <header>
+        <h1>🐝 Bee Pathfinding System</h1>
+        <p>Sistema de Búsqueda de Caminos con Algoritmos DFS y BFS</p>
+      </header>
 
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background: rgba(255, 255, 255, 0.1);"></div>
-                <span>Celda Vacía</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #2d2d2d;"></div>
-                <span>Obstáculo</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);"></div>
-                <span>🌸 Flor</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);"></div>
-                <span>🐝 Inicio</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);"></div>
-                <span>🏠 Enjambre</span>
-            </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div
+            class="legend-color"
+            style="background: rgba(255, 255, 255, 0.1)"
+          ></div>
+          <span>Celda Vacía</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #2d2d2d"></div>
+          <span>Obstáculo</span>
+        </div>
+        <div class="legend-item">
+          <div
+            class="legend-color"
+            style="
+              background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            "
+          ></div>
+          <span>🌸 Flor</span>
+        </div>
+        <div class="legend-item">
+          <div
+            class="legend-color"
+            style="
+              background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);
+            "
+          ></div>
+          <span>🐝 Inicio</span>
+        </div>
+        <div class="legend-item">
+          <div
+            class="legend-color"
+            style="
+              background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+            "
+          ></div>
+          <span>🏠 Enjambre</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-panel">
+          <h3>⚙️ Control del Mundo</h3>
+          <button onclick="initializeWorld()">🔄 Generar Nuevo Mundo</button>
+          <div class="mode-selector">
+            <button class="mode-btn" onclick="setMode('start')">
+              📍 Definir Inicio
+            </button>
+            <button class="mode-btn" onclick="setMode('goal')">
+              🎯 Definir Enjambre
+            </button>
+          </div>
+          <p id="modeIndicator" style="color: #ff8c00; margin-top: 10px">
+            Modo: Ninguno
+          </p>
         </div>
 
-        <div class="controls">
-            <div class="control-panel">
-                <h3>⚙️ Control del Mundo</h3>
-                <button onclick="initializeWorld()">🔄 Generar Nuevo Mundo</button>
-                <div class="mode-selector">
-                    <button class="mode-btn" onclick="setMode('start')">📍 Definir Inicio</button>
-                    <button class="mode-btn" onclick="setMode('goal')">🎯 Definir Enjambre</button>
-                </div>
-                <p id="modeIndicator" style="color: #ff8c00; margin-top: 10px;">Modo: Ninguno</p>
-            </div>
-
-            <div class="control-panel">
-                <h3>🔍 Algoritmos de Búsqueda</h3>
-                <button onclick="findPath('dfs')">🔎 Ejecutar DFS</button>
-                <button onclick="findPath('bfs')">🔍 Ejecutar BFS</button>
-                <button onclick="clearPath()">🧹 Limpiar Camino</button>
-            </div>
-
-            <div class="control-panel">
-                <h3>🖼️ Clasificación de Flores</h3>
-                <div class="image-upload">
-                    <input type="file" id="flowerImage" accept="image/*" onchange="previewImage(event)">
-                    <img id="imagePreview" style="display: none;">
-                </div>
-                <button onclick="equalizeImage()">✨ Ecualizar Histograma</button>
-                <button onclick="classifyImage()">🔬 Clasificar Imagen</button>
-                <div id="classificationResult" class="classification-result" style="display: none;"></div>
-            </div>
+        <div class="control-panel">
+          <h3>🔍 Algoritmos de Búsqueda</h3>
+          <button onclick="findPath('dfs')">🔎 Ejecutar DFS</button>
+          <button onclick="findPath('bfs')">🔍 Ejecutar BFS</button>
+          <button onclick="clearPath()">🧹 Limpiar Camino</button>
         </div>
 
-        <div id="gridContainer">
-            <div id="honeycombGrid"></div>
+        <div class="control-panel">
+          <h3>🖼️ Clasificación de Flores</h3>
+          <div class="image-upload">
+            <input
+              type="file"
+              id="flowerImage"
+              accept="image/*"
+              onchange="previewImage(event)"
+            />
+            <img id="imagePreview" style="display: none" />
+          </div>
+          <button onclick="equalizeImage()">✨ Ecualizar Histograma</button>
+          <button onclick="classifyImage()">🔬 Clasificar Imagen</button>
+          <div
+            id="classificationResult"
+            class="classification-result"
+            style="display: none"
+          ></div>
         </div>
+      </div>
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="pathLength">0</div>
-                <div class="stat-label">Longitud del Camino</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="flowersCollected">0</div>
-                <div class="stat-label">Flores Recolectadas 🌸</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="algorithm">-</div>
-                <div class="stat-label">Algoritmo Usado</div>
-            </div>
-        </div>
+      <div id="gridContainer">
+        <div id="honeycombGrid"></div>
+      </div>
 
-        <div class="control-panel" style="margin-top: 30px;">
-            <h3>📊 Comparación de Estrategias</h3>
-            <button onclick="showComparison()">📈 Ver Comparación DFS vs BFS</button>
-            <div id="comparisonTable"></div>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="pathLength">0</div>
+          <div class="stat-label">Longitud del Camino</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-value" id="flowersCollected">0</div>
+          <div class="stat-label">Flores Recolectadas 🌸</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="algorithm">-</div>
+          <div class="stat-label">Algoritmo Usado</div>
+        </div>
+      </div>
+
+      <div class="control-panel" style="margin-top: 30px">
+        <h3>📊 Comparación de Estrategias</h3>
+        <button onclick="showComparison()">
+          📈 Ver Comparación DFS vs BFS
+        </button>
+        <div id="comparisonTable"></div>
+      </div>
     </div>
 
     <script>
-        let gridSize = 12;
-        let worldData = { obstacles: [], flowers: [] };
-        let currentMode = null;
-        let startPos = null;
-        let goalPos = null;
-        let currentPath = [];
-        let currentImage = null;
+      let gridSize = 12;
+      let worldData = { obstacles: [], flowers: [] };
+      let currentMode = null;
+      let startPos = null;
+      let goalPos = null;
+      let currentPath = [];
+      let currentImage = null;
 
-        // Crear estrellas en el fondo
-        function createStars() {
-            const starsContainer = document.getElementById('starsContainer');
-            for (let i = 0; i < 100; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.width = Math.random() * 3 + 'px';
-                star.style.height = star.style.width;
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                starsContainer.appendChild(star);
-            }
+      // Crear estrellas en el fondo
+      function createStars() {
+        const starsContainer = document.getElementById("starsContainer");
+        for (let i = 0; i < 100; i++) {
+          const star = document.createElement("div");
+          star.className = "star";
+          star.style.width = Math.random() * 3 + "px";
+          star.style.height = star.style.width;
+          star.style.left = Math.random() * 100 + "%";
+          star.style.top = Math.random() * 100 + "%";
+          star.style.animationDelay = Math.random() * 3 + "s";
+          starsContainer.appendChild(star);
         }
+      }
 
-        function initializeWorld() {
-            fetch('/initialize_world', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ size: gridSize })
-            })
-            .then(response => response.json())
-            .then(data => {
-                worldData = data;
-                startPos = null;
-                goalPos = null;
-                currentPath = [];
-                renderGrid();
-                updateStats(0, 0, '-');
-            });
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('honeycombGrid');
-            grid.innerHTML = '';
-            grid.style.gridTemplateColumns = `repeat(${gridSize}, 55px)`;
-
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'hex-cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    cell.onclick = () => handleCellClick(i, j);
-
-                    const hexagon = document.createElement('div');
-                    hexagon.className = 'hexagon';
-                    
-                    let cellClass = 'hex-empty';
-                    let emoji = '';
-
-                    if (worldData.obstacles.some(obs => obs[0] === i && obs[1] === j)) {
-                        cellClass = 'hex-obstacle';
-                        emoji = '🪨';
-                    } else if (worldData.flowers.some(fl => fl[0] === i && fl[1] === j)) {
-                        cellClass = 'hex-flower';
-                        emoji = '🌸';
-                    }
-
-                    if (startPos && startPos[0] === i && startPos[1] === j) {
-                        cellClass = 'hex-start';
-                        emoji = '🐝';
-                    }
-
-                    if (goalPos && goalPos[0] === i && goalPos[1] === j) {
-                        cellClass = 'hex-goal';
-                        emoji = '🏠';
-                    }
-
-                    if (currentPath.some(p => p[0] === i && p[1] === j) && 
-                        !(startPos && startPos[0] === i && startPos[1] === j) &&
-                        !(goalPos && goalPos[0] === i && goalPos[1] === j)) {
-                        cellClass = 'hex-path';
-                    }
-
-                    hexagon.className += ` ${cellClass}`;
-                    hexagon.textContent = emoji;
-                    cell.appendChild(hexagon);
-                    grid.appendChild(cell);
-                }
-            }
-        }
-
-        function setMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('modeIndicator').textContent = 
-                mode === 'start' ? 'Modo: Definir Inicio 🐝' : 'Modo: Definir Enjambre 🏠';
-        }
-
-        function handleCellClick(row, col) {
-            if (!currentMode) {
-                alert('Selecciona un modo primero (Inicio o Enjambre)');
-                return;
-            }
-
-            fetch('/set_position', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: currentMode, position: [row, col] })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (currentMode === 'start') {
-                        startPos = [row, col];
-                    } else {
-                        goalPos = [row, col];
-                    }
-                    renderGrid();
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
-
-        function findPath(algorithm) {
-            if (!startPos || !goalPos) {
-                alert('Define el inicio y el enjambre primero');
-                return;
-            }
-
-            fetch('/find_path', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ algorithm: algorithm })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    currentPath = data.path;
-                    renderGrid();
-                    animateBee(data.path);
-                    updateStats(
-                        data.score.path_length,
-                        data.score.flowers_collected,
-                        data.score.algorithm
-                    );
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
-
-        function animateBee(path) {
-            let index = 0;
-            const interval = setInterval(() => {
-                if (index >= path.length) {
-                    clearInterval(interval);
-                    return;
-                }
-                
-                const [row, col] = path[index];
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                
-                if (cell) {
-                    const rect = cell.getBoundingClientRect();
-                    // Crear efecto de vuelo de abeja
-                    const bee = document.createElement('div');
-                    bee.textContent = '🐝';
-                    bee.style.position = 'fixed';
-                    bee.style.left = rect.left + 'px';
-                    bee.style.top = rect.top + 'px';
-                    bee.style.fontSize = '2em';
-                    bee.style.transition = 'all 0.5s';
-                    bee.style.zIndex = '1000';
-                    bee.style.filter = 'drop-shadow(0 0 10px #ffd700)';
-                    document.body.appendChild(bee);
-                    
-                    setTimeout(() => bee.remove(), 600);
-                }
-                
-                index++;
-            }, 500);
-        }
-
-        function clearPath() {
+      function initializeWorld() {
+        fetch("/initialize_world", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ size: gridSize }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            worldData = data;
+            startPos = null;
+            goalPos = null;
             currentPath = [];
             renderGrid();
-            updateStats(0, 0, '-');
-        }
+            updateStats(0, 0, "-");
+          });
+      }
 
-        function updateStats(pathLength, flowers, algorithm) {
-            document.getElementById('pathLength').textContent = pathLength;
-            document.getElementById('flowersCollected').textContent = flowers;
-            document.getElementById('algorithm').textContent = algorithm;
-        }
+      function renderGrid() {
+        const grid = document.getElementById("honeycombGrid");
+        grid.innerHTML = "";
+        grid.style.gridTemplateColumns = `repeat(${gridSize}, 55px)`;
 
-        function previewImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    currentImage = e.target.result;
-                    const preview = document.getElementById('imagePreview');
-                    preview.src = currentImage;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const cell = document.createElement("div");
+            cell.className = "hex-cell";
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            cell.onclick = () => handleCellClick(i, j);
 
-        function equalizeImage() {
-            if (!currentImage) {
-                alert('Primero carga una imagen');
-                return;
-            }
+            const hexagon = document.createElement("div");
+            hexagon.className = "hexagon";
 
-            fetch('/equalize_image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: currentImage })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const preview = document.getElementById('imagePreview');
-                    preview.src = data.equalized_image;
-                    currentImage = data.equalized_image;
-                    alert('✨ Imagen ecualizada exitosamente');
-                } else {
-                    alert('Error al ecualizar imagen');
-                }
-            });
-        }
+            let cellClass = "hex-empty";
+            let emoji = "";
 
-        function classifyImage() {
-            if (!currentImage) {
-                alert('Primero carga una imagen');
-                return;
+            if (
+              worldData.obstacles.some((obs) => obs[0] === i && obs[1] === j)
+            ) {
+              cellClass = "hex-obstacle";
+              emoji = "🪨";
+            } else if (
+              worldData.flowers.some((fl) => fl[0] === i && fl[1] === j)
+            ) {
+              cellClass = "hex-flower";
+              emoji = "🌸";
             }
 
-            fetch('/classify_flower', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: currentImage })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const result = document.getElementById('classificationResult');
-                    const classification = data.classification;
-                    const isFlower = classification.label !== 'not_a_flower';
-                    
-                    result.innerHTML = `
-                        <h4 style="color: ${isFlower ? '#00ff00' : '#ff4444'};">
-                            ${isFlower ? '🌸 ¡Es una flor!' : '❌ No es una flor'}
+            if (startPos && startPos[0] === i && startPos[1] === j) {
+              cellClass = "hex-start";
+              emoji = "🐝";
+            }
+
+            if (goalPos && goalPos[0] === i && goalPos[1] === j) {
+              cellClass = "hex-goal";
+              emoji = "🏠";
+            }
+
+            if (
+              currentPath.some((p) => p[0] === i && p[1] === j) &&
+              !(startPos && startPos[0] === i && startPos[1] === j) &&
+              !(goalPos && goalPos[0] === i && goalPos[1] === j)
+            ) {
+              cellClass = "hex-path";
+            }
+
+            hexagon.className += ` ${cellClass}`;
+            hexagon.textContent = emoji;
+            cell.appendChild(hexagon);
+            grid.appendChild(cell);
+          }
+        }
+      }
+
+      function setMode(mode) {
+        currentMode = mode;
+        document
+          .querySelectorAll(".mode-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.target.classList.add("active");
+        document.getElementById("modeIndicator").textContent =
+          mode === "start"
+            ? "Modo: Definir Inicio 🐝"
+            : "Modo: Definir Enjambre 🏠";
+      }
+
+      function handleCellClick(row, col) {
+        if (!currentMode) {
+          alert("Selecciona un modo primero (Inicio o Enjambre)");
+          return;
+        }
+
+        fetch("/set_position", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: currentMode, position: [row, col] }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              if (currentMode === "start") {
+                startPos = [row, col];
+              } else {
+                goalPos = [row, col];
+              }
+              renderGrid();
+            } else {
+              alert(data.message);
+            }
+          });
+      }
+
+      function findPath(algorithm) {
+        if (!startPos || !goalPos) {
+          alert("Define el inicio y el enjambre primero");
+          return;
+        }
+
+        fetch("/find_path", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ algorithm: algorithm }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              currentPath = data.path;
+              renderGrid();
+              animateBee(data.path);
+              updateStats(
+                data.score.path_length,
+                data.score.flowers_collected,
+                data.score.algorithm
+              );
+            } else {
+              alert(data.message);
+            }
+          });
+      }
+      // ...existing code...
+      function animateBee(path) {
+        let index = 0;
+        const interval = setInterval(() => {
+          if (index >= path.length) {
+            clearInterval(interval);
+            return;
+          }
+
+          const [row, col] = path[index];
+          const cell = document.querySelector(
+            `[data-row="${row}"][data-col="${col}"]`
+          );
+
+          if (cell) {
+            const rect = cell.getBoundingClientRect();
+            // Ajustar posición considerando el scroll
+            const bee = document.createElement("div");
+            bee.textContent = "🐝";
+            bee.style.position = "absolute";
+            bee.style.left = rect.left + window.scrollX + "px";
+            bee.style.top = rect.top + window.scrollY + "px";
+            bee.style.fontSize = "2em";
+            bee.style.transition = "all 0.5s";
+            bee.style.zIndex = "1000";
+            bee.style.filter = "drop-shadow(0 0 10px #ffd700)";
+            document.body.appendChild(bee);
+
+            setTimeout(() => bee.remove(), 600);
+          }
+
+          index++;
+        }, 500);
+      }
+      // ...existing code...
+      function clearPath() {
+        currentPath = [];
+        renderGrid();
+        updateStats(0, 0, "-");
+      }
+
+      function updateStats(pathLength, flowers, algorithm) {
+        document.getElementById("pathLength").textContent = pathLength;
+        document.getElementById("flowersCollected").textContent = flowers;
+        document.getElementById("algorithm").textContent = algorithm;
+      }
+
+      function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            currentImage = e.target.result;
+            const preview = document.getElementById("imagePreview");
+            preview.src = currentImage;
+            preview.style.display = "block";
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function equalizeImage() {
+        if (!currentImage) {
+          alert("Primero carga una imagen");
+          return;
+        }
+
+        fetch("/equalize_image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: currentImage }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const preview = document.getElementById("imagePreview");
+              preview.src = data.equalized_image;
+              currentImage = data.equalized_image;
+              alert("✨ Imagen ecualizada exitosamente");
+            } else {
+              alert("Error al ecualizar imagen");
+            }
+          });
+      }
+
+      function classifyImage() {
+        if (!currentImage) {
+          alert("Primero carga una imagen");
+          return;
+        }
+
+        fetch("/classify_flower", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: currentImage }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const result = document.getElementById("classificationResult");
+              const classification = data.classification;
+              const isFlower = classification.label !== "not_a_flower";
+
+              result.innerHTML = `
+                        <h4 style="color: ${isFlower ? "#00ff00" : "#ff4444"};">
+                            ${
+                              isFlower
+                                ? "🌸 ¡Es una flor!"
+                                : "❌ No es una flor"
+                            }
                         </h4>
-                        <p><strong>Etiqueta:</strong> ${classification.label}</p>
-                        <p><strong>Confianza:</strong> ${(classification.score * 100).toFixed(2)}%</p>
+                        <p><strong>Etiqueta:</strong> ${
+                          classification.label
+                        }</p>
+                        <p><strong>Confianza:</strong> ${(
+                          classification.score * 100
+                        ).toFixed(2)}%</p>
                         <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 5px; margin-top: 10px;">
-                            <div style="width: ${classification.score * 100}%; height: 20px; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 5px;"></div>
+                            <div style="width: ${
+                              classification.score * 100
+                            }%; height: 20px; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 5px;"></div>
                         </div>
                     `;
-                    result.style.display = 'block';
-                }
-            });
-        }
+              result.style.display = "block";
+            }
+          });
+      }
 
-        function showComparison() {
-            fetch('/get_scores')
-            .then(response => response.json())
-            .then(scores => {
-                const tableDiv = document.getElementById('comparisonTable');
-                
-                if (scores.dfs.length === 0 && scores.bfs.length === 0) {
-                    tableDiv.innerHTML = '<p style="color: #ff8c00; margin-top: 15px;">No hay datos para comparar. Ejecuta algunos algoritmos primero.</p>';
-                    return;
-                }
+      function showComparison() {
+        fetch("/get_scores")
+          .then((response) => response.json())
+          .then((scores) => {
+            const tableDiv = document.getElementById("comparisonTable");
 
-                let html = '<table class="comparison-table"><thead><tr>';
-                html += '<th>Algoritmo</th><th>Longitud Camino</th><th>Flores Recolectadas</th><th>Eficiencia</th>';
-                html += '</tr></thead><tbody>';
+            if (scores.dfs.length === 0 && scores.bfs.length === 0) {
+              tableDiv.innerHTML =
+                '<p style="color: #ff8c00; margin-top: 15px;">No hay datos para comparar. Ejecuta algunos algoritmos primero.</p>';
+              return;
+            }
 
-                // Calcular promedios
-                const calcAvg = (arr, key) => arr.length ? 
-                    (arr.reduce((sum, item) => sum + item[key], 0) / arr.length).toFixed(2) : 0;
+            let html = '<table class="comparison-table"><thead><tr>';
+            html +=
+              "<th>Algoritmo</th><th>Longitud Camino</th><th>Flores Recolectadas</th><th>Eficiencia</th>";
+            html += "</tr></thead><tbody>";
 
-                if (scores.dfs.length > 0) {
-                    const avgPath = calcAvg(scores.dfs, 'path_length');
-                    const avgFlowers = calcAvg(scores.dfs, 'flowers_collected');
-                    const efficiency = avgFlowers / avgPath;
-                    
-                    html += `<tr>
+            // Calcular promedios
+            const calcAvg = (arr, key) =>
+              arr.length
+                ? (
+                    arr.reduce((sum, item) => sum + item[key], 0) / arr.length
+                  ).toFixed(2)
+                : 0;
+
+            if (scores.dfs.length > 0) {
+              const avgPath = calcAvg(scores.dfs, "path_length");
+              const avgFlowers = calcAvg(scores.dfs, "flowers_collected");
+              const efficiency = avgFlowers / avgPath;
+
+              html += `<tr>
                         <td><strong>DFS</strong></td>
                         <td>${avgPath}</td>
                         <td>${avgFlowers} 🌸</td>
                         <td>${efficiency.toFixed(3)}</td>
                     </tr>`;
-                }
+            }
 
-                if (scores.bfs.length > 0) {
-                    const avgPath = calcAvg(scores.bfs, 'path_length');
-                    const avgFlowers = calcAvg(scores.bfs, 'flowers_collected');
-                    const efficiency = avgFlowers / avgPath;
-                    
-                    html += `<tr>
+            if (scores.bfs.length > 0) {
+              const avgPath = calcAvg(scores.bfs, "path_length");
+              const avgFlowers = calcAvg(scores.bfs, "flowers_collected");
+              const efficiency = avgFlowers / avgPath;
+
+              html += `<tr>
                         <td><strong>BFS</strong></td>
                         <td>${avgPath}</td>
                         <td>${avgFlowers} 🌸</td>
                         <td>${efficiency.toFixed(3)}</td>
                     </tr>`;
-                }
+            }
 
-                html += '</tbody></table>';
+            html += "</tbody></table>";
 
-                // Análisis comparativo
-                if (scores.dfs.length > 0 && scores.bfs.length > 0) {
-                    const dfsFlowers = calcAvg(scores.dfs, 'flowers_collected');
-                    const bfsFlowers = calcAvg(scores.bfs, 'flowers_collected');
-                    
-                    html += '<div style="margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px;">';
-                    html += '<h4 style="color: #ffd700;">📊 Análisis Comparativo</h4>';
-                    
-                    if (dfsFlowers > bfsFlowers) {
-                        html += '<p style="color: #00ff00;">✅ DFS recolectó más flores en promedio</p>';
-                    } else if (bfsFlowers > dfsFlowers) {
-                        html += '<p style="color: #00ff00;">✅ BFS recolectó más flores en promedio</p>';
-                    } else {
-                        html += '<p style="color: #ffd700;">⚖️ Ambos algoritmos recolectaron el mismo número de flores</p>';
-                    }
-                    
-                    html += '<p style="margin-top: 10px;">DFS explora en profundidad, puede encontrar caminos más largos con más flores. BFS encuentra el camino más corto, pero puede recolectar menos flores.</p>';
-                    html += '</div>';
-                }
+            // Análisis comparativo
+            if (scores.dfs.length > 0 && scores.bfs.length > 0) {
+              const dfsFlowers = calcAvg(scores.dfs, "flowers_collected");
+              const bfsFlowers = calcAvg(scores.bfs, "flowers_collected");
 
-                tableDiv.innerHTML = html;
-            });
-        }
+              html +=
+                '<div style="margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px;">';
+              html +=
+                '<h4 style="color: #ffd700;">📊 Análisis Comparativo</h4>';
 
-        // Inicializar
-        createStars();
-        initializeWorld();
+              if (dfsFlowers > bfsFlowers) {
+                html +=
+                  '<p style="color: #00ff00;">✅ DFS recolectó más flores en promedio</p>';
+              } else if (bfsFlowers > dfsFlowers) {
+                html +=
+                  '<p style="color: #00ff00;">✅ BFS recolectó más flores en promedio</p>';
+              } else {
+                html +=
+                  '<p style="color: #ffd700;">⚖️ Ambos algoritmos recolectaron el mismo número de flores</p>';
+              }
+
+              html +=
+                '<p style="margin-top: 10px;">DFS explora en profundidad, puede encontrar caminos más largos con más flores. BFS encuentra el camino más corto, pero puede recolectar menos flores.</p>';
+              html += "</div>";
+            }
+
+            tableDiv.innerHTML = html;
+          });
+      }
+
+      // Inicializar
+      createStars();
+      initializeWorld();
     </script>
-</body>
+  </body>
 </html>
