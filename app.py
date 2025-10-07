@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 import random
 import base64
+import time
+import os
 from io import BytesIO
 from PIL import Image, ImageEnhance
 import numpy as np
@@ -181,6 +183,23 @@ def initialize_world():
         'flowers': flowers
     })
 
+FLORES_FOLDER = "Flores"
+os.makedirs(FLORES_FOLDER, exist_ok=True)
+
+@app.route('/save_flower_image', methods=['POST'])
+def save_flower_image():
+    """Guarda una nueva imagen en la carpeta Flores"""
+    data = request.json
+    image_data = data.get('image')
+    label = data.get('label', 'flor')
+    # Decodifica la imagen base64
+    img_bytes = base64.b64decode(image_data.split(',')[1])
+    filename = f"{label}_{random.randint(1000,9999)}.png"
+    filepath = os.path.join(FLORES_FOLDER, filename)
+    with open(filepath, "wb") as f:
+        f.write(img_bytes)
+    return jsonify({'success': True, 'filename': filename})
+
 @app.route('/set_position', methods=['POST'])
 def set_position():
     """Define punto de inicio o meta"""
@@ -246,6 +265,7 @@ def get_scores():
     """Obtiene los puntajes registrados"""
     return jsonify(world_state['scores'])
 
+
 @app.route('/equalize_image', methods=['POST'])
 def equalize_image():
     """Ecualiza el histograma de una imagen"""
@@ -258,6 +278,26 @@ def equalize_image():
         return jsonify({'success': True, 'equalized_image': equalized})
     else:
         return jsonify({'success': False, 'message': 'Error al ecualizar imagen'})
+@app.route('/get_flower_info', methods=['POST'])
+def get_flower_info():
+    """Devuelve una imagen aleatoria de la carpeta Flores y su clasificación"""
+    # Busca imágenes en la carpeta
+    images = [f for f in os.listdir(FLORES_FOLDER) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    if not images:
+        return jsonify({'success': False, 'message': 'No hay imágenes de flores'})
+    img_name = random.choice(images)
+    img_path = os.path.join(FLORES_FOLDER, img_name)
+    with open(img_path, "rb") as f:
+        img_bytes = f.read()
+    img_b64 = base64.b64encode(img_bytes).decode()
+    img_data_url = f"data:image/png;base64,{img_b64}"
+    # Clasifica la imagen
+    result = classify_image(img_data_url)
+    return jsonify({
+        'success': True,
+        'equalized_image': img_data_url,
+        'classification': result
+    })
 
 @app.route('/classify_flower', methods=['POST'])
 def classify_flower():
@@ -266,7 +306,14 @@ def classify_flower():
     image_data = data.get('image')
     
     result = classify_image(image_data)
-    
+    image_bytes = base64.b64decode(image_data.split(",")[1])
+    label = result.get('label', 'flower')
+    image_filename = f"{label}_{int(time.time())}_{random.randint(1000,9999)}.jpg"
+    image_path = os.path.join("Flores", image_filename)
+
+    with open(image_path, "wb") as f:
+        f.write(image_bytes)
+
     return jsonify({
         'success': True,
         'classification': result

@@ -477,7 +477,50 @@
         <div id="comparisonTable"></div>
       </div>
     </div>
-
+    <div
+      id="flowerModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(20, 24, 54, 0.85);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: #222;
+          border-radius: 20px;
+          padding: 30px;
+          box-shadow: 0 0 40px #ffd700;
+          text-align: center;
+          max-width: 400px;
+          margin: auto;
+        "
+      >
+        <img
+          id="modalFlowerImg"
+          src=""
+          style="
+            max-width: 100%;
+            border-radius: 10px;
+            border: 2px solid #ffd700;
+          "
+        />
+        <div
+          id="modalClassification"
+          style="margin-top: 20px; color: #ffd700"
+        ></div>
+        <button onclick="closeFlowerModal()" style="margin-top: 20px">
+          Cerrar
+        </button>
+      </div>
+    </div>
     <script>
       let gridSize = 12;
       let worldData = { obstacles: [], flowers: [] };
@@ -640,24 +683,33 @@
               alert(data.message);
             }
           });
-      }
-      // ...existing code...
+      } // ...existing code...
+      let beePaused = false;
+      let beeInterval = null;
+      let beePath = [];
+      let beeIndex = 0;
+
       function animateBee(path) {
-        let index = 0;
-        const interval = setInterval(() => {
-          if (index >= path.length) {
-            clearInterval(interval);
+        beePath = path;
+        beeIndex = 0;
+        beePaused = false;
+        if (beeInterval) clearInterval(beeInterval);
+
+        beeInterval = setInterval(() => {
+          if (beePaused) return; // Pausa si el modal está abierto
+
+          if (beeIndex >= beePath.length) {
+            clearInterval(beeInterval);
             return;
           }
 
-          const [row, col] = path[index];
+          const [row, col] = beePath[beeIndex];
           const cell = document.querySelector(
             `[data-row="${row}"][data-col="${col}"]`
           );
 
           if (cell) {
             const rect = cell.getBoundingClientRect();
-            // Ajustar posición considerando el scroll
             const bee = document.createElement("div");
             bee.textContent = "🐝";
             bee.style.position = "absolute";
@@ -670,11 +722,44 @@
             document.body.appendChild(bee);
 
             setTimeout(() => bee.remove(), 600);
+
+            // Si la celda es una flor, muestra el modal y pausa la abeja
+            if (
+              worldData.flowers.some((fl) => fl[0] === row && fl[1] === col)
+            ) {
+              beePaused = true;
+              showFlowerModal(row, col);
+            }
           }
 
-          index++;
+          beeIndex++;
         }, 500);
       }
+      function showFlowerModal(row, col) {
+        fetch("/get_flower_info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ position: [row, col] }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              document.getElementById("modalFlowerImg").src =
+                data.equalized_image;
+              document.getElementById("modalClassification").innerHTML = `
+          <h4>${data.classification.label}</h4>
+          <p>Precisión: ${(data.classification.score * 100).toFixed(2)}%</p>
+        `;
+              document.getElementById("flowerModal").style.display = "flex";
+            }
+          });
+      }
+
+      function closeFlowerModal() {
+        document.getElementById("flowerModal").style.display = "none";
+        beePaused = false;
+      }
+      // ...existing code...
       // ...existing code...
       function clearPath() {
         currentPath = [];
