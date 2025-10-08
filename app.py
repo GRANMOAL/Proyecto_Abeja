@@ -47,10 +47,15 @@ def create_world(n, num_obstacles=25, num_flowers=15):
     
     return world, obstacles, flowers
 
-def dfs_search(world, start, goal, n):
-    """Búsqueda en profundidad"""
+def dfs_search_full_path(world, start, goal, n):
+    """
+    DFS que retorna TODO el recorrido de exploración
+    incluyendo retrocesos y caminos sin salida
+    """
     stack = [(start, [start], [])]
     visited = set()
+    full_exploration = []  # TODOS los pasos que da el algoritmo
+    flowers_found = []
     
     while stack:
         (current, path, flowers_collected) = stack.pop()
@@ -59,30 +64,40 @@ def dfs_search(world, start, goal, n):
             continue
         
         visited.add(current)
+        full_exploration.append(current)  # Registrar cada paso
         
         # Verificar si hay flor en la posición actual
         current_flowers = flowers_collected.copy()
         if world.get(current) == "flower" and current not in flowers_collected:
             current_flowers.append(current)
+            if current not in flowers_found:
+                flowers_found.append(current)
         
+        # Si llegamos a la meta, seguir registrando el recorrido
         if current == goal:
-            return path, current_flowers
+            return full_exploration, current_flowers, path
         
         x, y = current
-        # Movimientos: arriba, abajo, izquierda, derecha
-        neighbors = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
+        # Movimientos: derecha, izquierda, abajo, arriba (orden de exploración DFS)
+        neighbors = [(x, y+1), (x, y-1), (x+1, y), (x-1, y)]
         
         for nx, ny in neighbors:
             if 0 <= nx < n and 0 <= ny < n:
-                if (nx, ny) not in visited and world.get((nx, ny)) != "obstacle":
-                    stack.append(((nx, ny), path + [(nx, ny)], current_flowers))
+                neighbor_pos = (nx, ny)
+                if neighbor_pos not in visited and world.get(neighbor_pos) != "obstacle":
+                    stack.append((neighbor_pos, path + [neighbor_pos], current_flowers))
     
-    return None, []
+    return full_exploration, flowers_found, []
 
-def bfs_search(world, start, goal, n):
-    """Búsqueda en amplitud"""
+def bfs_search_full_path(world, start, goal, n):
+    """
+    BFS que retorna TODO el recorrido de exploración
+    nivel por nivel completo
+    """
     queue = deque([(start, [start], [])])
     visited = set([start])
+    full_exploration = [start]  # TODOS los pasos que da el algoritmo
+    flowers_found = []
     
     while queue:
         (current, path, flowers_collected) = queue.popleft()
@@ -91,21 +106,26 @@ def bfs_search(world, start, goal, n):
         current_flowers = flowers_collected.copy()
         if world.get(current) == "flower" and current not in flowers_collected:
             current_flowers.append(current)
+            if current not in flowers_found:
+                flowers_found.append(current)
         
+        # Si llegamos a la meta, retornar todo lo explorado
         if current == goal:
-            return path, current_flowers
+            return full_exploration, current_flowers, path
         
         x, y = current
-        # Movimientos: arriba, abajo, izquierda, derecha
-        neighbors = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
+        # Movimientos: arriba, abajo, izquierda, derecha (orden BFS)
+        neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
         
         for nx, ny in neighbors:
             if 0 <= nx < n and 0 <= ny < n:
-                if (nx, ny) not in visited and world.get((nx, ny)) != "obstacle":
-                    visited.add((nx, ny))
-                    queue.append(((nx, ny), path + [(nx, ny)], current_flowers))
+                neighbor_pos = (nx, ny)
+                if neighbor_pos not in visited and world.get(neighbor_pos) != "obstacle":
+                    visited.add(neighbor_pos)
+                    full_exploration.append(neighbor_pos)  # Registrar exploración
+                    queue.append((neighbor_pos, path + [neighbor_pos], current_flowers))
     
-    return None, []
+    return full_exploration, flowers_found, []
 
 def equalize_histogram(image_data):
     """Ecualización de histograma para mejorar imágenes subexpuestas"""
@@ -137,9 +157,6 @@ def equalize_histogram(image_data):
 
 def classify_image(image_data):
     """Clasificación simple de imágenes (simulación)"""
-    # En producción, aquí usarías un transformador como en tu código de ejemplo
-    # Por ahora, simulamos la clasificación
-    
     classifications = [
         {"label": "flower", "score": 0.85},
         {"label": "rose", "score": 0.78},
@@ -192,7 +209,6 @@ def save_flower_image():
     data = request.json
     image_data = data.get('image')
     label = data.get('label', 'flor')
-    # Decodifica la imagen base64
     img_bytes = base64.b64decode(image_data.split(',')[1])
     filename = f"{label}_{random.randint(1000,9999)}.png"
     filepath = os.path.join(FLORES_FOLDER, filename)
@@ -206,7 +222,7 @@ def set_position():
     global world_state
     
     data = request.json
-    pos_type = data.get('type')  # 'start' o 'goal'
+    pos_type = data.get('type')
     position = tuple(data.get('position'))
     
     if world_state['grid'].get(position) == "obstacle":
@@ -218,34 +234,38 @@ def set_position():
 
 @app.route('/find_path', methods=['POST'])
 def find_path():
-    """Encuentra un camino usando DFS o BFS"""
+    """
+    Encuentra el recorrido COMPLETO del algoritmo
+    La abeja recorre TODO el camino de exploración, no solo el óptimo
+    """
     global world_state
     
     data = request.json
-    algorithm = data.get('algorithm')  # 'dfs' o 'bfs'
+    algorithm = data.get('algorithm')
     
     if not world_state['start'] or not world_state['goal']:
         return jsonify({'success': False, 'message': 'Define inicio y meta primero'})
     
     if algorithm == 'dfs':
-        path, flowers = dfs_search(
+        full_path, flowers, optimal_path = dfs_search_full_path(
             world_state['grid'],
             world_state['start'],
             world_state['goal'],
             N
         )
     else:
-        path, flowers = bfs_search(
+        full_path, flowers, optimal_path = bfs_search_full_path(
             world_state['grid'],
             world_state['start'],
             world_state['goal'],
             N
         )
     
-    if path:
+    if full_path:
         score = {
             'algorithm': algorithm.upper(),
-            'path_length': len(path),
+            'path_length': len(optimal_path),  # Longitud del camino óptimo
+            'exploration_length': len(full_path),  # Total de nodos explorados
             'flowers_collected': len(flowers),
             'flowers': flowers
         }
@@ -253,7 +273,8 @@ def find_path():
         
         return jsonify({
             'success': True,
-            'path': path,
+            'path': full_path,  # RETORNA TODO EL RECORRIDO
+            'optimal_path': optimal_path,  # Camino óptimo para referencia
             'flowers_collected': flowers,
             'score': score
         })
@@ -264,7 +285,6 @@ def find_path():
 def get_scores():
     """Obtiene los puntajes registrados"""
     return jsonify(world_state['scores'])
-
 
 @app.route('/equalize_image', methods=['POST'])
 def equalize_image():
@@ -278,10 +298,10 @@ def equalize_image():
         return jsonify({'success': True, 'equalized_image': equalized})
     else:
         return jsonify({'success': False, 'message': 'Error al ecualizar imagen'})
+
 @app.route('/get_flower_info', methods=['POST'])
 def get_flower_info():
     """Devuelve una imagen aleatoria de la carpeta Flores y su clasificación"""
-    # Busca imágenes en la carpeta
     images = [f for f in os.listdir(FLORES_FOLDER) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     if not images:
         return jsonify({'success': False, 'message': 'No hay imágenes de flores'})
@@ -291,7 +311,6 @@ def get_flower_info():
         img_bytes = f.read()
     img_b64 = base64.b64encode(img_bytes).decode()
     img_data_url = f"data:image/png;base64,{img_b64}"
-    # Clasifica la imagen
     result = classify_image(img_data_url)
     return jsonify({
         'success': True,

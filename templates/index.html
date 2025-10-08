@@ -24,7 +24,6 @@
         overflow-x: hidden;
       }
 
-      /* Estrellas de fondo */
       .stars {
         position: fixed;
         top: 0;
@@ -190,28 +189,22 @@
         transition: all 0.3s;
       }
 
-      .hex-empty {
-        background: rgba(255, 255, 255, 0.05);
-      }
-      .hex-obstacle {
-        background: #2d2d2d;
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
-      }
-      .hex-flower {
+      .hex-empty { background: rgba(255, 255, 255, 0.05); }
+      .hex-obstacle { background: #2d2d2d; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+      .hex-flower { 
         background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
         animation: flower-pulse 2s infinite;
       }
-      .hex-start {
+      .hex-start { 
         background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);
         box-shadow: 0 0 20px #00ff00;
       }
-      .hex-goal {
+      .hex-goal { 
         background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
         animation: hive-glow 1.5s infinite;
       }
-      .hex-path {
-        background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%);
-        animation: path-glow 1s;
+      .hex-visited { 
+        background: rgba(135, 206, 235, 0.4);
       }
 
       @keyframes flower-pulse {
@@ -234,17 +227,6 @@
         }
       }
 
-      @keyframes path-glow {
-        from {
-          transform: scale(0.8);
-          opacity: 0;
-        }
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
-      }
-
       .hex-cell:hover .hexagon {
         transform: scale(1.1);
         filter: brightness(1.3);
@@ -252,7 +234,7 @@
 
       .stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
         margin-top: 30px;
       }
@@ -314,14 +296,6 @@
         border: 2px solid #ffd700;
       }
 
-      #bee {
-        position: absolute;
-        font-size: 2em;
-        transition: all 0.5s;
-        z-index: 100;
-        filter: drop-shadow(0 0 10px #ffd700);
-      }
-
       .legend {
         display: flex;
         justify-content: center;
@@ -344,14 +318,21 @@
         width: 30px;
         height: 30px;
         border-radius: 5px;
-        clip-path: polygon(
-          30% 0%,
-          70% 0%,
-          100% 50%,
-          70% 100%,
-          30% 100%,
-          0% 50%
-        );
+        clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+      }
+
+      .info-banner {
+        background: rgba(255, 140, 0, 0.2);
+        border: 2px solid #ff8c00;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .info-banner strong {
+        color: #ff8c00;
+        font-size: 1.2em;
       }
     </style>
   </head>
@@ -364,44 +345,36 @@
         <p>Sistema de Búsqueda de Caminos con Algoritmos DFS y BFS</p>
       </header>
 
+      <div class="info-banner">
+        <strong>⚠️ Visualización de Recorrido Completo</strong><br>
+        La abeja recorrerá <u>TODO</u> el camino de exploración del algoritmo,<br>
+        incluyendo retrocesos y caminos sin salida (búsqueda sin información)
+      </div>
+
       <div class="legend">
         <div class="legend-item">
-          <div
-            class="legend-color"
-            style="background: rgba(255, 255, 255, 0.1)"
-          ></div>
+          <div class="legend-color" style="background: rgba(255, 255, 255, 0.1);"></div>
           <span>Celda Vacía</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color" style="background: #2d2d2d"></div>
+          <div class="legend-color" style="background: #2d2d2d;"></div>
           <span>Obstáculo</span>
         </div>
         <div class="legend-item">
-          <div
-            class="legend-color"
-            style="
-              background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
-            "
-          ></div>
+          <div class="legend-color" style="background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);"></div>
           <span>🌸 Flor</span>
         </div>
         <div class="legend-item">
-          <div
-            class="legend-color"
-            style="
-              background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);
-            "
-          ></div>
+          <div class="legend-color" style="background: linear-gradient(135deg, #00ff00 0%, #32cd32 100%);"></div>
           <span>🐝 Inicio</span>
         </div>
         <div class="legend-item">
-          <div
-            class="legend-color"
-            style="
-              background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-            "
-          ></div>
+          <div class="legend-color" style="background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);"></div>
           <span>🏠 Enjambre</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: rgba(135, 206, 235, 0.4);"></div>
+          <span>👁️ Visitado</span>
         </div>
       </div>
 
@@ -410,43 +383,31 @@
           <h3>⚙️ Control del Mundo</h3>
           <button onclick="initializeWorld()">🔄 Generar Nuevo Mundo</button>
           <div class="mode-selector">
-            <button class="mode-btn" onclick="setMode('start')">
-              📍 Definir Inicio
-            </button>
-            <button class="mode-btn" onclick="setMode('goal')">
-              🎯 Definir Enjambre
-            </button>
+            <button class="mode-btn" onclick="setMode('start')">📍 Definir Inicio</button>
+            <button class="mode-btn" onclick="setMode('goal')">🎯 Definir Enjambre</button>
           </div>
-          <p id="modeIndicator" style="color: #ff8c00; margin-top: 10px">
-            Modo: Ninguno
-          </p>
+          <p id="modeIndicator" style="color: #ff8c00; margin-top: 10px">Modo: Ninguno</p>
         </div>
 
         <div class="control-panel">
           <h3>🔍 Algoritmos de Búsqueda</h3>
-          <button onclick="findPath('dfs')">🔎 Ejecutar DFS</button>
-          <button onclick="findPath('bfs')">🔍 Ejecutar BFS</button>
+          <button onclick="findPath('dfs')">🔎 Ejecutar DFS (Profundidad)</button>
+          <button onclick="findPath('bfs')">🔍 Ejecutar BFS (Amplitud)</button>
           <button onclick="clearPath()">🧹 Limpiar Camino</button>
+          <p style="font-size: 0.85em; color: #ffd700; margin-top: 10px;">
+            💡 La abeja recorrerá el camino COMPLETO de exploración
+          </p>
         </div>
 
         <div class="control-panel">
           <h3>🖼️ Clasificación de Flores</h3>
           <div class="image-upload">
-            <input
-              type="file"
-              id="flowerImage"
-              accept="image/*"
-              onchange="previewImage(event)"
-            />
+            <input type="file" id="flowerImage" accept="image/*" onchange="previewImage(event)" />
             <img id="imagePreview" style="display: none" />
           </div>
           <button onclick="equalizeImage()">✨ Ecualizar Histograma</button>
           <button onclick="classifyImage()">🔬 Clasificar Imagen</button>
-          <div
-            id="classificationResult"
-            class="classification-result"
-            style="display: none"
-          ></div>
+          <div id="classificationResult" class="classification-result" style="display: none"></div>
         </div>
       </div>
 
@@ -456,8 +417,12 @@
 
       <div class="stats">
         <div class="stat-card">
+          <div class="stat-value" id="totalExplored">0</div>
+          <div class="stat-label">Nodos Explorados</div>
+        </div>
+        <div class="stat-card">
           <div class="stat-value" id="pathLength">0</div>
-          <div class="stat-label">Longitud del Camino</div>
+          <div class="stat-label">Camino Óptimo</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="flowersCollected">0</div>
@@ -471,29 +436,25 @@
 
       <div class="control-panel" style="margin-top: 30px">
         <h3>📊 Comparación de Estrategias</h3>
-        <button onclick="showComparison()">
-          📈 Ver Comparación DFS vs BFS
-        </button>
+        <button onclick="showComparison()">📈 Ver Comparación DFS vs BFS</button>
         <div id="comparisonTable"></div>
       </div>
     </div>
-    <div
-      id="flowerModal"
-      style="
+
+    <!-- Modal para mostrar flores -->
+    <div id="flowerModal" style="
         display: none;
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(20, 24, 54, 0.85);
+        background: rgba(20, 24, 54, 0.95);
         z-index: 2000;
         justify-content: center;
         align-items: center;
-      "
-    >
-      <div
-        style="
+      ">
+      <div style="
           background: #222;
           border-radius: 20px;
           padding: 30px;
@@ -501,36 +462,28 @@
           text-align: center;
           max-width: 400px;
           margin: auto;
-        "
-      >
-        <img
-          id="modalFlowerImg"
-          src=""
-          style="
+        ">
+        <img id="modalFlowerImg" src="" style="
             max-width: 100%;
             border-radius: 10px;
             border: 2px solid #ffd700;
-          "
-        />
-        <div
-          id="modalClassification"
-          style="margin-top: 20px; color: #ffd700"
-        ></div>
-        <button onclick="closeFlowerModal()" style="margin-top: 20px">
-          Cerrar
-        </button>
+          " />
+        <div id="modalClassification" style="margin-top: 20px; color: #ffd700"></div>
+        <button onclick="closeFlowerModal()" style="margin-top: 20px">Cerrar</button>
       </div>
     </div>
+
     <script>
       let gridSize = 12;
       let worldData = { obstacles: [], flowers: [] };
       let currentMode = null;
       let startPos = null;
       let goalPos = null;
-      let currentPath = [];
+      let visitedCells = [];
       let currentImage = null;
+      let beePaused = false;
+      let beeInterval = null;
 
-      // Crear estrellas en el fondo
       function createStars() {
         const starsContainer = document.getElementById("starsContainer");
         for (let i = 0; i < 100; i++) {
@@ -556,9 +509,9 @@
             worldData = data;
             startPos = null;
             goalPos = null;
-            currentPath = [];
+            visitedCells = [];
             renderGrid();
-            updateStats(0, 0, "-");
+            updateStats(0, 0, 0, "-");
           });
       }
 
@@ -581,14 +534,10 @@
             let cellClass = "hex-empty";
             let emoji = "";
 
-            if (
-              worldData.obstacles.some((obs) => obs[0] === i && obs[1] === j)
-            ) {
+            if (worldData.obstacles.some((obs) => obs[0] === i && obs[1] === j)) {
               cellClass = "hex-obstacle";
               emoji = "🪨";
-            } else if (
-              worldData.flowers.some((fl) => fl[0] === i && fl[1] === j)
-            ) {
+            } else if (worldData.flowers.some((fl) => fl[0] === i && fl[1] === j)) {
               cellClass = "hex-flower";
               emoji = "🌸";
             }
@@ -603,12 +552,10 @@
               emoji = "🏠";
             }
 
-            if (
-              currentPath.some((p) => p[0] === i && p[1] === j) &&
-              !(startPos && startPos[0] === i && startPos[1] === j) &&
-              !(goalPos && goalPos[0] === i && goalPos[1] === j)
-            ) {
-              cellClass = "hex-path";
+            if (visitedCells.some((p) => p[0] === i && p[1] === j) &&
+                !(startPos && startPos[0] === i && startPos[1] === j) &&
+                !(goalPos && goalPos[0] === i && goalPos[1] === j)) {
+              cellClass = "hex-visited";
             }
 
             hexagon.className += ` ${cellClass}`;
@@ -621,14 +568,10 @@
 
       function setMode(mode) {
         currentMode = mode;
-        document
-          .querySelectorAll(".mode-btn")
-          .forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".mode-btn").forEach((btn) => btn.classList.remove("active"));
         event.target.classList.add("active");
         document.getElementById("modeIndicator").textContent =
-          mode === "start"
-            ? "Modo: Definir Inicio 🐝"
-            : "Modo: Definir Enjambre 🏠";
+          mode === "start" ? "Modo: Definir Inicio 🐝" : "Modo: Definir Enjambre 🏠";
       }
 
       function handleCellClick(row, col) {
@@ -663,6 +606,10 @@
           return;
         }
 
+        // Limpiar visualización anterior
+        visitedCells = [];
+        renderGrid();
+
         fetch("/find_path", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -671,10 +618,15 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              currentPath = data.path;
+              // data.path contiene TODO el recorrido de exploración
+              visitedCells = data.path;
               renderGrid();
-              animateBee(data.path);
+              
+              // Animar la abeja recorriendo TODO el camino
+              animateBeeFullPath(data.path, data.score);
+              
               updateStats(
+                data.score.exploration_length,
                 data.score.path_length,
                 data.score.flowers_collected,
                 data.score.algorithm
@@ -683,58 +635,64 @@
               alert(data.message);
             }
           });
-      } // ...existing code...
-      let beePaused = false;
-      let beeInterval = null;
-      let beePath = [];
-      let beeIndex = 0;
+      }
 
-      function animateBee(path) {
-        beePath = path;
-        beeIndex = 0;
+      function animateBeeFullPath(fullPath, score) {
+        let index = 0;
         beePaused = false;
         if (beeInterval) clearInterval(beeInterval);
 
         beeInterval = setInterval(() => {
-          if (beePaused) return; // Pausa si el modal está abierto
+          if (beePaused) return;
 
-          if (beeIndex >= beePath.length) {
+          if (index >= fullPath.length) {
             clearInterval(beeInterval);
+            // Mostrar estadísticas al finalizar
+            setTimeout(() => {
+              alert(`
+🐝 Recorrido Completo de ${score.algorithm}
+
+📍 Nodos explorados: ${score.exploration_length}
+🎯 Camino óptimo: ${score.path_length}
+🌸 Flores encontradas: ${score.flowers_collected}
+
+${score.algorithm === 'DFS' ? 
+  '✓ DFS exploró en profundidad con retrocesos constantes' : 
+  '✓ BFS exploró nivel por nivel sistemáticamente'}
+              `);
+            }, 500);
             return;
           }
 
-          const [row, col] = beePath[beeIndex];
-          const cell = document.querySelector(
-            `[data-row="${row}"][data-col="${col}"]`
-          );
+          const [row, col] = fullPath[index];
+          const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
 
           if (cell) {
             const rect = cell.getBoundingClientRect();
             const bee = document.createElement("div");
             bee.textContent = "🐝";
-            bee.style.position = "absolute";
-            bee.style.left = rect.left + window.scrollX + "px";
-            bee.style.top = rect.top + window.scrollY + "px";
+            bee.style.position = "fixed";
+            bee.style.left = rect.left + "px";
+            bee.style.top = rect.top + "px";
             bee.style.fontSize = "2em";
-            bee.style.transition = "all 0.5s";
+            bee.style.transition = "all 0.3s";
             bee.style.zIndex = "1000";
             bee.style.filter = "drop-shadow(0 0 10px #ffd700)";
             document.body.appendChild(bee);
 
-            setTimeout(() => bee.remove(), 600);
+            setTimeout(() => bee.remove(), 400);
 
             // Si la celda es una flor, muestra el modal y pausa la abeja
-            if (
-              worldData.flowers.some((fl) => fl[0] === row && fl[1] === col)
-            ) {
+            if (worldData.flowers.some((fl) => fl[0] === row && fl[1] === col)) {
               beePaused = true;
               showFlowerModal(row, col);
             }
           }
 
-          beeIndex++;
-        }, 500);
+          index++;
+        }, 300); // 300ms entre cada movimiento para visualización clara
       }
+
       function showFlowerModal(row, col) {
         fetch("/get_flower_info", {
           method: "POST",
@@ -744,12 +702,11 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              document.getElementById("modalFlowerImg").src =
-                data.equalized_image;
+              document.getElementById("modalFlowerImg").src = data.equalized_image;
               document.getElementById("modalClassification").innerHTML = `
-          <h4>${data.classification.label}</h4>
-          <p>Precisión: ${(data.classification.score * 100).toFixed(2)}%</p>
-        `;
+                <h4>${data.classification.label}</h4>
+                <p>Precisión: ${(data.classification.score * 100).toFixed(2)}%</p>
+              `;
               document.getElementById("flowerModal").style.display = "flex";
             }
           });
@@ -759,16 +716,16 @@
         document.getElementById("flowerModal").style.display = "none";
         beePaused = false;
       }
-      // ...existing code...
-      // ...existing code...
+
       function clearPath() {
-        currentPath = [];
+        visitedCells = [];
         renderGrid();
-        updateStats(0, 0, "-");
+        updateStats(0, 0, 0, "-");
       }
 
-      function updateStats(pathLength, flowers, algorithm) {
-        document.getElementById("pathLength").textContent = pathLength;
+      function updateStats(explored, optimalPath, flowers, algorithm) {
+        document.getElementById("totalExplored").textContent = explored;
+        document.getElementById("pathLength").textContent = optimalPath;
         document.getElementById("flowersCollected").textContent = flowers;
         document.getElementById("algorithm").textContent = algorithm;
       }
@@ -830,25 +787,15 @@
               const isFlower = classification.label !== "not_a_flower";
 
               result.innerHTML = `
-                        <h4 style="color: ${isFlower ? "#00ff00" : "#ff4444"};">
-                            ${
-                              isFlower
-                                ? "🌸 ¡Es una flor!"
-                                : "❌ No es una flor"
-                            }
-                        </h4>
-                        <p><strong>Etiqueta:</strong> ${
-                          classification.label
-                        }</p>
-                        <p><strong>Confianza:</strong> ${(
-                          classification.score * 100
-                        ).toFixed(2)}%</p>
-                        <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 5px; margin-top: 10px;">
-                            <div style="width: ${
-                              classification.score * 100
-                            }%; height: 20px; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 5px;"></div>
-                        </div>
-                    `;
+                <h4 style="color: ${isFlower ? "#00ff00" : "#ff4444"};">
+                    ${isFlower ? "🌸 ¡Es una flor!" : "❌ No es una flor"}
+                </h4>
+                <p><strong>Etiqueta:</strong> ${classification.label}</p>
+                <p><strong>Confianza:</strong> ${(classification.score * 100).toFixed(2)}%</p>
+                <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <div style="width: ${classification.score * 100}%; height: 20px; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 5px;"></div>
+                </div>
+              `;
               result.style.display = "block";
             }
           });
@@ -867,29 +814,27 @@
             }
 
             let html = '<table class="comparison-table"><thead><tr>';
-            html +=
-              "<th>Algoritmo</th><th>Longitud Camino</th><th>Flores Recolectadas</th><th>Eficiencia</th>";
+            html += "<th>Algoritmo</th><th>Nodos Explorados</th><th>Camino Óptimo</th><th>Flores</th><th>Eficiencia</th>";
             html += "</tr></thead><tbody>";
 
-            // Calcular promedios
             const calcAvg = (arr, key) =>
               arr.length
-                ? (
-                    arr.reduce((sum, item) => sum + item[key], 0) / arr.length
-                  ).toFixed(2)
+                ? (arr.reduce((sum, item) => sum + item[key], 0) / arr.length).toFixed(2)
                 : 0;
 
             if (scores.dfs.length > 0) {
+              const avgExplored = calcAvg(scores.dfs, "exploration_length");
               const avgPath = calcAvg(scores.dfs, "path_length");
               const avgFlowers = calcAvg(scores.dfs, "flowers_collected");
-              const efficiency = avgFlowers / avgPath;
+              const efficiency = (avgFlowers / avgExplored * 100).toFixed(1);
 
               html += `<tr>
-                        <td><strong>DFS</strong></td>
-                        <td>${avgPath}</td>
-                        <td>${avgFlowers} 🌸</td>
-                        <td>${efficiency.toFixed(3)}</td>
-                    </tr>`;
+                <td><strong>DFS</strong></td>
+                <td>${avgExplored}</td>
+                <td>${avgPath}</td>
+                <td>${avgFlowers} 🌸</td>
+                <td>${efficiency}%</td>
+              </tr>`;
             }
 
             if (scores.bfs.length > 0) {
